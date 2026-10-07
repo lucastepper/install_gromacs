@@ -1,0 +1,4 @@
+AVX_256_~cuda=ln5netdgd6ieilzhs3mddmwqtk7o4ijr
+AVX2_256_~cuda=44wsop5oo3kp3lquxspgnomqmajxmrau
+AVX_256_cuda=sysb52stv3cbsbjx4alzeixoon3vao2p
+AVX2_256_cuda=dzv4ziof3r4dawgzxn5i44zthagxaffj
