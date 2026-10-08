@@ -3,6 +3,16 @@
 # Install CPU-optimized GROMACS variants, with and without CUDA, through Spack.
 set -euo pipefail
 
+if [[ -t 1 ]]; then
+    GREEN=$'\033[0;32m'
+    RED=$'\033[0;31m'
+    COLOR_RESET=$'\033[0m'
+else
+    GREEN=""
+    RED=""
+    COLOR_RESET=""
+fi
+
 # Arguments after GROMACSVERSION are additional constraints for every Spack spec.
 SPACK_INSTALL_ARGS=("${@:2}")
 
@@ -47,9 +57,9 @@ for cuda_variant in ~cuda +cuda; do
     for build in AVX_256 AVX2_256 AVX_512 ZEN2; do
         architecture="${architectures[$build]}"
         build_name="${build}_${cuda_variant#+}"
-        echo "Installing ${build_name}: gromacs@${GROMACSVERSION} ${cuda_variant} arch=${architecture}"
+        echo "Installing ${build_name}: gromacs@${GROMACSVERSION} ~~mpi ~~double ${cuda_variant} arch=${architecture}"
 
-        if spack install "gromacs@${GROMACSVERSION} ${cuda_variant} arch=${architecture}" "${SPACK_INSTALL_ARGS[@]}"; then
+        if spack install "gromacs@${GROMACSVERSION} ~~mpi ~~double ${cuda_variant} arch=${architecture}" "${SPACK_INSTALL_ARGS[@]}"; then
             if hash="$(spack python -c 'import spack.store; r=max(spack.store.STORE.db.query("gromacs", installed=True), key=lambda s: spack.store.STORE.db.get_record(s).installation_time); print(r.dag_hash())')"; then
                 gromacs_hashes["$build_name"]="$hash"
                 printf '%s=%s\n' "$build_name" "$hash" >> "$hash_file"
@@ -64,15 +74,19 @@ for cuda_variant in ~cuda +cuda; do
 done
 
 echo "Hash records written to: $hash_file"
-echo "Successful builds (${#successful_builds[@]}):"
+printf '%sSuccessful builds (%s):%s\n' "$GREEN" "${#successful_builds[@]}" "$COLOR_RESET"
 if ((${#successful_builds[@]})); then
-    printf '  %s\n' "${successful_builds[@]}"
+    for build_name in "${successful_builds[@]}"; do
+        printf '%s  %s%s\n' "$GREEN" "$build_name" "$COLOR_RESET"
+    done
 else
-    echo "  none"
+    printf '%s  none%s\n' "$GREEN" "$COLOR_RESET"
 fi
-echo "Failed builds (${#failed_builds[@]}):"
+printf '%sFailed builds (%s):%s\n' "$RED" "${#failed_builds[@]}" "$COLOR_RESET"
 if ((${#failed_builds[@]})); then
-    printf '  %s\n' "${failed_builds[@]}"
+    for build_name in "${failed_builds[@]}"; do
+        printf '%s  %s%s\n' "$RED" "$build_name" "$COLOR_RESET"
+    done
 else
-    echo "  none"
+    printf '%s  none%s\n' "$RED" "$COLOR_RESET"
 fi
